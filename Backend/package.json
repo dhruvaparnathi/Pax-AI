@@ -15,10 +15,10 @@
   "dependencies": {
     "@getbrevo/brevo": "^5.0.4",
     "@google/genai": "^2.10.0",
-    "@langchain/core": "^1.2.1",
-    "@langchain/google-genai": "^2.2.0",
+    "@imagekit/nodejs": "^7.9.1",
     "@langchain/mistralai": "^1.2.0",
     "@mistralai/mistralai": "^2.3.0",
+    "@tavily/core": "^0.7.6",
     "axios": "^1.17.0",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
@@ -30,6 +30,8 @@
     "langchain": "^1.5.2",
     "mongoose": "^9.6.3",
     "morgan": "^1.11.0",
-    "socket.io": "^4.8.3"
+    "multer": "^2.2.0",
+    "socket.io": "^4.8.3",
+    "zod": "^4.4.3"
   }
 }

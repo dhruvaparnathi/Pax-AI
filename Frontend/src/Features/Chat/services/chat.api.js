@@ -5,8 +5,22 @@ const api = axios.create({
     withCredentials: true,
 });
 
-export const sendMessage = async (question, chatId) => {
-    const response = await api.post("/send", { question, chat: chatId });
+export const sendMessage = async (question, chatId, files = []) => {
+    const formData = new FormData();
+    formData.append("question", question || "");
+    if (chatId) {
+        formData.append("chat", chatId);
+    }
+    if (files && files.length > 0) {
+        files.forEach(file => {
+            formData.append("image", file);
+        });
+    }
+    const response = await api.post("/send", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data"
+        }
+    });
     return response.data;
 }
 

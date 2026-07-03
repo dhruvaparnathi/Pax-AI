@@ -7,6 +7,7 @@ import {
     setCurrentChatId, 
     addNewChat, 
     addNewMessage, 
+    removeLastMessage,
     setChats, 
     setChatMessages,
     deleteChatFromState 
@@ -16,18 +17,33 @@ export const useChat = () => {
     const dispatch = useDispatch();
     const { chats, currentChatId, isLoading, error } = useSelector((state) => state.chat);
 
-    async function handleSendMessage({ question, chatId }) {
+    async function handleSendMessage({ question, chatId, files = [] }) {
+        let activeId = chatId;
         try {
             dispatch(setIsLoading(true));
-            dispatch(addNewMessage({ chatId: chatId, content: question, role: "user" }));
-            const data = await sendMessage(question, chatId);
+            const userMedia = files && files.length > 0
+                ? files.map(file => ({ url: URL.createObjectURL(file), alt: file.name }))
+                : [];
+
+            dispatch(addNewMessage({ 
+                chatId: chatId, 
+                content: question, 
+                role: "user",
+                media: userMedia
+            }));
+            
+            const data = await sendMessage(question, chatId, files);
             const { chat, messages } = data;
             
-            let activeId = chatId;
             if (!chatId && chat) {
                 activeId = chat._id;
                 dispatch(addNewChat({ chatId: activeId, title: chat.title }));
-                dispatch(addNewMessage({ chatId: activeId, content: question, role: "user" }));
+                dispatch(addNewMessage({ 
+                    chatId: activeId, 
+                    content: question, 
+                    role: "user",
+                    media: userMedia
+                }));
                 dispatch(setCurrentChatId(activeId));
             }
 
@@ -37,7 +53,11 @@ export const useChat = () => {
             }
             return activeId;
         } catch (error) {
-            dispatch(setError(error.message));
+            const errorMsg = error.response?.data?.error || error.message || "An unexpected error occurred.";
+            if (activeId) {
+                dispatch(removeLastMessage({ chatId: activeId }));
+            }
+            dispatch(setError(errorMsg));
             throw error;
         } finally {
             dispatch(setIsLoading(false));
@@ -76,7 +96,8 @@ export const useChat = () => {
 
             const formattedMessages = messages.map(msg => ({
                 content: msg.content,
-                role: msg.role
+                role: msg.role,
+                media: msg.media
             }));
 
             dispatch(setChatMessages({ chatId, messages: formattedMessages }));

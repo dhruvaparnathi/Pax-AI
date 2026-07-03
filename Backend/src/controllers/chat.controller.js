@@ -1,33 +1,58 @@
 import { generateResponse, chatTitleGenerator } from "../services/ai.service.js";
 import chatModel from "../models/chat.model.js";
 import messageModel from "../models/message.model.js";
+import { uploadImage } from "../services/storageIMG.service.js";
 
 export const sendMessage = async (req, res) => {
+    let userMessage = null;
+    let chat = null;
     try {
         const { question, chat: chatId } = req.body;
+        const files = req.files;
+        let uploadedImageUrl = [];
 
-        if (!question || !question.trim()) {
+        if (files && files.length > 0) {
+            uploadedImageUrl = await Promise.all(
+                files.map(async (file) => {
+                    const result = await uploadImage({
+                        buffer: file.buffer,
+                        fileName: file.originalname,
+                        fileType: file.mimetype,
+                    });
+                    
+                    return {
+                        url: result.url,
+                        alt: file.originalname
+                    };
+                })
+            );
+        }
+
+        if ((!question || !question.trim()) && uploadedImageUrl.length === 0) {
             return res.status(400).json({ error: "Question or message is required" });
         }
 
+        const queryText = question && question.trim() ? question : "Analyze this image.";
+
         
-        let title = null, chat = null;
+        let title = null;
         if (!chatId) {
-            title = await chatTitleGenerator(question);
+            title = await chatTitleGenerator(queryText);
             chat = await chatModel.create({ user: req.user._id, title });
         }
         
-        const userMessage = await messageModel.create({
+        userMessage = await messageModel.create({
             chat: chatId || chat._id,
-            content: question,
+            content: queryText,
             role: "user",
+            media: uploadedImageUrl
         });
 
         const messages = await messageModel.find({
             chat: chatId || chat._id,
         });
         
-        const response = await generateResponse(messages);
+        const response = await generateResponse(messages , uploadedImageUrl.map(img => img.url));
 
         const aiMessage = await messageModel.create({
             chat: chatId || chat._id,
@@ -43,6 +68,12 @@ export const sendMessage = async (req, res) => {
         });
 
     } catch (error) {
+        if (userMessage) {
+            await messageModel.findByIdAndDelete(userMessage._id);
+        }
+        if (!req.body.chat && chat) {
+            await chatModel.findByIdAndDelete(chat._id);
+        }
         res.status(500).json({ error: error.message });
     }
 }

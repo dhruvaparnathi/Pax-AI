@@ -31,9 +31,16 @@ const chatSlice = createSlice({
             };
         },
         addNewMessage(state, action) {
-            const { chatId, content, role } = action.payload;
+            const { chatId, content, role, media } = action.payload;
             if (state.chats[chatId]) {
-                state.chats[chatId].messages.push({ content, role });
+                state.chats[chatId].messages.push({ content, role, media });
+                state.chats[chatId].lastUpdated = new Date().toISOString();
+            }
+        },
+        removeLastMessage(state, action) {
+            const { chatId } = action.payload;
+            if (state.chats[chatId] && state.chats[chatId].messages.length > 0) {
+                state.chats[chatId].messages.pop();
                 state.chats[chatId].lastUpdated = new Date().toISOString();
             }
         },
@@ -61,6 +68,7 @@ export const {
     setError,
     addNewChat,
     addNewMessage,
+    removeLastMessage,
     setChatMessages,
     deleteChatFromState
 } = chatSlice.actions;

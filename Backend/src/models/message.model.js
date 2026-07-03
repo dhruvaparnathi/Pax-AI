@@ -16,6 +16,17 @@ const messageSchema = new mongoose.Schema(
       enum: ["ai", "user"],
       required: true,
     },
+    media: [
+      {
+        url: {
+          type: String,
+          required: true
+        },
+        alt: {
+          type: String
+        }
+      }
+    ]
   },
   { timestamps: true }
 );

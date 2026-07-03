@@ -26,6 +26,54 @@ export default function Dashboard() {
   const [followUpQuery, setFollowUpQuery] = useState("");
   const [selectedFocus, setSelectedFocus] = useState("All");
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [filePreviews, setFilePreviews] = useState([]);
+  const fileInputRef = useRef(null);
+  const [toastError, setToastError] = useState(null);
+
+  useEffect(() => {
+    const previews = selectedFiles.map(file => URL.createObjectURL(file));
+    setFilePreviews(previews);
+    return () => {
+      previews.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [selectedFiles]);
+
+  const handleAttachmentClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files).filter(file => file.type.startsWith("image/"));
+      setSelectedFiles(prev => [...prev, ...newFiles]);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeFile = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const renderFileThumbnails = () => {
+    if (selectedFiles.length === 0) return null;
+    return (
+      <div className="flex flex-wrap gap-2 mb-3 p-2 bg-zinc-900/30 rounded-xl border border-zinc-900/40 select-none">
+        {selectedFiles.map((file, idx) => (
+          <div key={idx} className="relative group w-14 h-14 rounded-lg overflow-hidden border border-zinc-800 bg-zinc-900">
+            <img src={filePreviews[idx]} alt="thumbnail" className="w-full h-full object-cover" />
+            <button
+              type="button"
+              onClick={() => removeFile(idx)}
+              className="absolute top-0.5 right-0.5 w-4 h-4 bg-zinc-950/80 hover:bg-zinc-950 text-zinc-400 hover:text-zinc-200 rounded-full flex items-center justify-center text-[10px] cursor-pointer animate-fade-in"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   const messagesEndRef = useRef(null);
 
@@ -68,18 +116,34 @@ export default function Dashboard() {
 
   const handleSearchSubmit = async (e) => {
     e.preventDefault();
-    if (!searchQuery.trim() || isLoading) return;
+    if ((!searchQuery.trim() && selectedFiles.length === 0) || isLoading) return;
     const query = searchQuery;
+    const filesToSend = [...selectedFiles];
     setSearchQuery("");
-    await handleSendMessage({ question: query });
+    setSelectedFiles([]);
+    try {
+      await handleSendMessage({ question: query, files: filesToSend });
+    } catch (err) {
+      const msg = err.response?.data?.error || err.message || "An unexpected error occurred.";
+      setToastError(msg);
+      setTimeout(() => setToastError(null), 5000);
+    }
   };
 
   const handleFollowUpSubmit = async (e) => {
     e.preventDefault();
-    if (!followUpQuery.trim() || isLoading) return;
+    if ((!followUpQuery.trim() && selectedFiles.length === 0) || isLoading) return;
     const query = followUpQuery;
+    const filesToSend = [...selectedFiles];
     setFollowUpQuery("");
-    await handleSendMessage({ question: query, chatId: currentChatId });
+    setSelectedFiles([]);
+    try {
+      await handleSendMessage({ question: query, chatId: currentChatId, files: filesToSend });
+    } catch (err) {
+      const msg = err.response?.data?.error || err.message || "An unexpected error occurred.";
+      setToastError(msg);
+      setTimeout(() => setToastError(null), 5000);
+    }
   };
 
   const focusOptions = ["All", "Academic", "Writing", "YouTube", "Reddit"];
@@ -361,9 +425,22 @@ export default function Dashboard() {
                       <div key={idx} className="animate-fade-in">
                         {isUser ? (
                           /* User query card */
-                          <div className="flex justify-end mb-2">
-                            <div className="bg-zinc-900 border border-zinc-800 text-zinc-100 text-sm px-4.5 py-3 rounded-2xl max-w-[85%] shadow-sm leading-relaxed whitespace-pre-wrap select-text">
-                              {msg.content}
+                          <div className="flex justify-end mb-2 select-text">
+                            <div className="bg-zinc-900 border border-zinc-800 text-zinc-100 text-sm px-4.5 py-3 rounded-2xl max-w-[85%] shadow-sm leading-relaxed whitespace-pre-wrap flex flex-col gap-2.5">
+                              {msg.content && <div>{msg.content}</div>}
+                              {msg.media && msg.media.length > 0 && (
+                                <div className="flex flex-wrap gap-2 select-none">
+                                  {msg.media.map((img, i) => (
+                                    <a key={i} href={img.url} target="_blank" rel="noopener noreferrer">
+                                      <img 
+                                        src={img.url} 
+                                        alt={img.alt || "Uploaded image"} 
+                                        className="max-w-[240px] max-h-[160px] rounded-lg object-cover border border-zinc-800 hover:border-zinc-700 transition-colors shadow-sm" 
+                                      />
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </div>
                         ) : (
@@ -393,6 +470,7 @@ export default function Dashboard() {
                 <div className="max-w-[680px] mx-auto relative">
                   <form onSubmit={handleFollowUpSubmit}>
                     <div className="border border-zinc-900 focus-within:border-zinc-800 rounded-2xl p-3.5 bg-zinc-950 transition-all duration-200">
+                      {renderFileThumbnails()}
                       <textarea
                         value={followUpQuery}
                         onChange={(e) => setFollowUpQuery(e.target.value)}
@@ -407,15 +485,27 @@ export default function Dashboard() {
                         className="w-full bg-transparent resize-none text-zinc-200 text-sm outline-none placeholder:text-zinc-700 custom-scrollbar pr-10"
                       />
                       <div className="flex items-center justify-between border-t border-zinc-900/60 pt-2.5 mt-2 select-none">
-                        <span className="text-[10px] text-zinc-600 font-medium">
-                          Press Enter to send, Shift+Enter for new line
-                        </span>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={handleAttachmentClick}
+                            className="text-zinc-500 hover:text-zinc-300 transition-colors p-1.5 rounded-lg hover:bg-zinc-900 cursor-pointer flex items-center justify-center"
+                            title="Upload images"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                            </svg>
+                          </button>
+                          <span className="text-[10px] text-zinc-600 font-medium">
+                            Press Enter to send, Shift+Enter for new line
+                          </span>
+                        </div>
                         
                         <button
                           type="submit"
-                          disabled={!followUpQuery.trim() || isLoading}
+                          disabled={(!followUpQuery.trim() && selectedFiles.length === 0) || isLoading}
                           className={`p-2 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
-                            followUpQuery.trim() && !isLoading
+                            (followUpQuery.trim() || selectedFiles.length > 0) && !isLoading
                               ? "bg-zinc-100 text-zinc-950 hover:bg-zinc-200"
                               : "bg-transparent text-zinc-800 border border-zinc-900 cursor-not-allowed"
                           }`}
@@ -450,6 +540,7 @@ export default function Dashboard() {
               {/* Search Box */}
               <div className="w-full border border-zinc-900 focus-within:border-zinc-800 rounded-2xl p-4 transition-all duration-200">
                 <form onSubmit={handleSearchSubmit}>
+                  {renderFileThumbnails()}
                   <textarea
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -464,30 +555,43 @@ export default function Dashboard() {
                     className="w-full bg-transparent resize-none text-zinc-200 text-sm outline-none placeholder:text-zinc-700 custom-scrollbar"
                   />
                   <div className="flex items-center justify-between border-t border-zinc-900/60 pt-3 mt-2">
-                    {/* Focus Filter Select */}
-                    <div className="flex gap-1.5 overflow-x-auto pb-1 max-w-[70%] custom-scrollbar select-none">
-                      {focusOptions.map((opt) => (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => setSelectedFocus(opt)}
-                          className={`text-[10px] px-2.5 py-1.5 rounded-full font-semibold transition-all cursor-pointer ${
-                            selectedFocus === opt
-                              ? "bg-zinc-900 text-zinc-100 border border-zinc-800"
-                              : "bg-transparent border border-transparent text-zinc-600 hover:text-zinc-400"
-                          }`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
+                    {/* Attachment and Focus Filter Select */}
+                    <div className="flex items-center gap-3 max-w-[70%] select-none">
+                      <button
+                        type="button"
+                        onClick={handleAttachmentClick}
+                        className="text-zinc-500 hover:text-zinc-300 transition-colors p-1.5 rounded-lg hover:bg-zinc-900 cursor-pointer flex items-center justify-center flex-shrink-0"
+                        title="Upload images"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                        </svg>
+                      </button>
+
+                      <div className="flex gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
+                        {focusOptions.map((opt) => (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => setSelectedFocus(opt)}
+                            className={`text-[10px] px-2.5 py-1.5 rounded-full font-semibold transition-all cursor-pointer ${
+                              selectedFocus === opt
+                                ? "bg-zinc-900 text-zinc-100 border border-zinc-800"
+                                : "bg-transparent border border-transparent text-zinc-600 hover:text-zinc-400"
+                            }`}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
                     {/* Send Button */}
                     <button
                       type="submit"
-                      disabled={!searchQuery.trim() || isLoading}
+                      disabled={(!searchQuery.trim() && selectedFiles.length === 0) || isLoading}
                       className={`p-2 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
-                        searchQuery.trim() && !isLoading
+                        (searchQuery.trim() || selectedFiles.length > 0) && !isLoading
                           ? "bg-zinc-100 text-zinc-950 hover:bg-zinc-200"
                           : "bg-transparent text-zinc-800 border border-zinc-900 cursor-not-allowed"
                       }`}
@@ -526,6 +630,32 @@ export default function Dashboard() {
         )}
 
       </main>
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        multiple
+        accept="image/*"
+        className="hidden"
+      />
+
+      {/* Floating Toast Notification */}
+      {toastError && (
+        <div className="fixed bottom-6 right-6 max-w-sm bg-zinc-950/95 border border-red-900/50 text-zinc-100 px-4 py-3.5 rounded-xl shadow-2xl flex items-start gap-3 z-50 animate-fade-in backdrop-blur-md">
+          <span className="text-base flex-shrink-0 mt-0.5 select-none">⚠️</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-red-400 select-none">Error occurred</p>
+            <p className="text-[11px] text-zinc-400 leading-relaxed mt-0.5 break-words select-text">{toastError}</p>
+          </div>
+          <button
+            onClick={() => setToastError(null)}
+            className="text-zinc-500 hover:text-zinc-300 text-xs font-bold px-1 transition-colors cursor-pointer select-none"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
     </div>
   );
