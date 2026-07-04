@@ -57,6 +57,14 @@ const chatSlice = createSlice({
             if (state.currentChatId === chatId) {
                 state.currentChatId = null;
             }
+        },
+        updateLastMessageContent(state, action) {
+            const { chatId, content } = action.payload;
+            if (state.chats[chatId] && state.chats[chatId].messages.length > 0) {
+                const messages = state.chats[chatId].messages;
+                messages[messages.length - 1].content = content;
+                state.chats[chatId].lastUpdated = new Date().toISOString();
+            }
         }
     }
 });
@@ -70,6 +78,7 @@ export const {
     addNewMessage,
     removeLastMessage,
     setChatMessages,
-    deleteChatFromState
+    deleteChatFromState,
+    updateLastMessageContent
 } = chatSlice.actions;
 export default chatSlice.reducer;

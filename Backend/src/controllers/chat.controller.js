@@ -19,7 +19,7 @@ export const sendMessage = async (req, res) => {
                         fileName: file.originalname,
                         fileType: file.mimetype,
                     });
-                    
+
                     return {
                         url: result.url,
                         alt: file.originalname
@@ -34,13 +34,13 @@ export const sendMessage = async (req, res) => {
 
         const queryText = question && question.trim() ? question : "Analyze this image.";
 
-        
+
         let title = null;
         if (!chatId) {
             title = await chatTitleGenerator(queryText);
             chat = await chatModel.create({ user: req.user._id, title });
         }
-        
+
         userMessage = await messageModel.create({
             chat: chatId || chat._id,
             content: queryText,
@@ -51,15 +51,15 @@ export const sendMessage = async (req, res) => {
         const messages = await messageModel.find({
             chat: chatId || chat._id,
         });
-        
-        const response = await generateResponse(messages , uploadedImageUrl.map(img => img.url));
+
+        const response = await generateResponse(messages, uploadedImageUrl.map(img => img.url));
 
         const aiMessage = await messageModel.create({
             chat: chatId || chat._id,
             content: response,
             role: "ai",
         });
-        
+
 
         return res.status(200).json({
             success: true,
@@ -78,11 +78,11 @@ export const sendMessage = async (req, res) => {
     }
 }
 
-export const getChats = async(req,res) => {
+export const getChats = async (req, res) => {
 
     const chats = await chatModel.find({ user: req.user._id });
 
-    if(!chats) {
+    if (!chats) {
         return res.status(404).json({ error: "No chats found" });
     }
 
@@ -90,21 +90,21 @@ export const getChats = async(req,res) => {
         success: true,
         chats,
     });
-    
+
 }
 
-export const getChatMessages = async(req,res) => {
+export const getChatMessages = async (req, res) => {
 
     const { chatId } = req.params;
     const chat = await chatModel.findById(chatId);
 
-    if(!chat) {
+    if (!chat) {
         return res.status(404).json({ error: "Chat not found" });
     }
 
     const messages = await messageModel.find({ chat: chatId });
 
-    if(!messages) {
+    if (!messages) {
         return res.status(404).json({ error: "No messages found" });
     }
 
@@ -115,21 +115,52 @@ export const getChatMessages = async(req,res) => {
 }
 
 
-export const deleteChat = async(req,res) => {
+export const deleteChat = async (req, res) => {
 
     const { chatId } = req.params;
     const chat = await chatModel.findById(chatId);
 
-    if(!chat) {
+    if (!chat) {
         return res.status(404).json({ error: "Chat not found" });
     }
 
     await chatModel.findByIdAndDelete(chatId);
 
     await messageModel.deleteMany({ chat: chatId });
-    
+
     return res.status(200).json({
         success: true,
         message: "Chat deleted successfully",
     });
+}
+
+export const uploadFiles = async (req, res) => {
+    try {
+        const files = req.files;
+        if (!files || files.length === 0) {
+            return res.status(400).json({ error: "No files uploaded" });
+        }
+
+        const uploadedImages = await Promise.all(
+            files.map(async (file) => {
+                const result = await uploadImage({
+                    buffer: file.buffer,
+                    fileName: file.originalname,
+                    fileType: file.mimetype,
+                });
+
+                return {
+                    url: result.url,
+                    alt: file.originalname
+                };
+            })
+        );
+
+        return res.status(200).json({
+            success: true,
+            files: uploadedImages
+        });
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
 }

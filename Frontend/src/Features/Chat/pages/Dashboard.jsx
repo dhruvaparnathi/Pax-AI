@@ -3,14 +3,14 @@ import { useNavigate } from "react-router";
 import { useDispatch } from "react-redux";
 import { useAuth } from "../../Auth/hooks/useAuth";
 import { useChat } from "../hooks/useChat";
-import { setCurrentChatId } from "../chat.slice";
+import { setCurrentChatId, addNewChat, addNewMessage, setIsLoading, updateLastMessageContent } from "../chat.slice";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user, handleLogout } = useAuth();
-  
+
   const {
     chats,
     currentChatId,
@@ -78,9 +78,60 @@ export default function Dashboard() {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    initializeSocketConnection();
+    const socket = initializeSocketConnection();
     handleFetchChats();
-  }, []);
+
+    let currentAIResponseText = "";
+    let isFirstToken = true;
+
+    socket.on('chat-created', ({ chat, userMessage }) => {
+      dispatch(addNewChat({ chatId: chat._id, title: chat.title }));
+      dispatch(addNewMessage({
+        chatId: chat._id,
+        content: userMessage.content,
+        role: "user",
+        media: userMessage.media
+      }));
+      dispatch(setCurrentChatId(chat._id));
+    });
+
+    socket.on('ai-token', ({ chatId, token }) => {
+      if (isFirstToken) {
+        dispatch(addNewMessage({
+          chatId,
+          content: token,
+          role: "ai"
+        }));
+        isFirstToken = false;
+        currentAIResponseText = token;
+      } else {
+        currentAIResponseText += token;
+        dispatch(updateLastMessageContent({
+          chatId,
+          content: currentAIResponseText
+        }));
+      }
+    });
+
+    socket.on('message-completed', ({ chatId, messages }) => {
+      isFirstToken = true;
+      currentAIResponseText = "";
+      dispatch(setIsLoading(false));
+    });
+
+    socket.on('error', (err) => {
+      setToastError(err.message);
+      dispatch(setIsLoading(false));
+      setTimeout(() => setToastError(null), 5000);
+    });
+
+    return () => {
+      socket.off('chat-created');
+      socket.off('ai-token');
+      socket.off('message-completed');
+      socket.off('error');
+    };
+  }, [dispatch]);
 
   // Keyboard shortcut Ctrl+K to start a New Thread
   useEffect(() => {
@@ -180,27 +231,26 @@ export default function Dashboard() {
 
   return (
     <div className="h-screen flex bg-zinc-950 text-zinc-100 antialiased font-sans overflow-hidden w-full relative">
-      
+
       {/* Mobile Drawer Overlay */}
       {isMobileSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden animate-fade-in"
           onClick={() => setIsMobileSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar Layout */}
-      <aside 
-        className={`w-60 border-r border-zinc-900 bg-zinc-950 p-6 flex flex-col justify-between flex-shrink-0 z-40 transition-all duration-300 md:duration-0 ${
-          isMobileSidebarOpen 
-            ? "fixed inset-y-0 left-0 bg-zinc-950 shadow-2xl" 
+      <aside
+        className={`w-60 border-r border-zinc-900 bg-zinc-950 p-6 flex flex-col justify-between flex-shrink-0 z-40 transition-all duration-300 md:duration-0 ${isMobileSidebarOpen
+            ? "fixed inset-y-0 left-0 bg-zinc-950 shadow-2xl"
             : "fixed inset-y-0 -left-60 md:static md:flex"
-        } md:flex flex-shrink-0 h-full`}
+          } md:flex flex-shrink-0 h-full`}
       >
         <div className="flex flex-col flex-1 min-h-0 space-y-6">
           {/* Logo */}
           <div className="flex items-center justify-between">
-            <div 
+            <div
               className="flex items-center gap-2 cursor-pointer"
               onClick={() => {
                 dispatch(setCurrentChatId(null));
@@ -217,9 +267,9 @@ export default function Dashboard() {
                 perplexity
               </span>
             </div>
-            
+
             {isMobileSidebarOpen && (
-              <button 
+              <button
                 onClick={() => setIsMobileSidebarOpen(false)}
                 className="md:hidden text-zinc-500 hover:text-zinc-300 p-1 cursor-pointer"
               >
@@ -251,8 +301,8 @@ export default function Dashboard() {
 
           {/* Navigation Links */}
           <nav className="space-y-1 select-none">
-            <a 
-              href="#" 
+            <a
+              href="#"
               onClick={(e) => {
                 e.preventDefault();
                 dispatch(setCurrentChatId(null));
@@ -260,11 +310,10 @@ export default function Dashboard() {
                 setFollowUpQuery("");
                 setIsMobileSidebarOpen(false);
               }}
-              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold text-xs transition-colors ${
-                !currentChatId 
-                  ? "bg-zinc-900 text-zinc-100 font-bold" 
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold text-xs transition-colors ${!currentChatId
+                  ? "bg-zinc-900 text-zinc-100 font-bold"
                   : "text-zinc-500 hover:text-zinc-300 font-medium"
-              }`}
+                }`}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -278,7 +327,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between text-[10px] font-bold text-zinc-600 uppercase tracking-wider px-2 mb-2">
               <span>Recent Threads</span>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
               {Object.values(chats).length === 0 ? (
                 <p className="text-[10px] text-zinc-700 px-2 italic mt-2">No threads yet</p>
@@ -290,11 +339,10 @@ export default function Dashboard() {
                     return (
                       <div
                         key={c._id}
-                        className={`group flex items-center justify-between w-full px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${
-                          isActive
+                        className={`group flex items-center justify-between w-full px-3 py-2 rounded-xl text-left transition-colors cursor-pointer ${isActive
                             ? "bg-zinc-900 text-zinc-100 font-semibold border border-zinc-800"
                             : "hover:bg-zinc-900/40 text-zinc-400 hover:text-zinc-200 font-medium"
-                        }`}
+                          }`}
                         onClick={() => {
                           handleOpenChat(c._id);
                           setIsMobileSidebarOpen(false);
@@ -303,7 +351,7 @@ export default function Dashboard() {
                         <span className="text-xs truncate flex-1 pr-2">
                           {c.title || "Untitled Thread"}
                         </span>
-                        
+
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -348,7 +396,7 @@ export default function Dashboard() {
 
       {/* Main Content Layout */}
       <main className="flex-1 flex flex-col h-full relative overflow-hidden z-10 animate-fade-in bg-zinc-950">
-        
+
         {/* Verification Alert Banner */}
         {!user.verified && (
           <div className="bg-amber-950/10 border-b border-amber-900/30 px-6 py-3 flex items-center justify-between gap-4 text-amber-400 text-xs font-medium select-none z-10">
@@ -367,7 +415,7 @@ export default function Dashboard() {
         {/* Mobile Navbar Header */}
         <header className="md:hidden flex items-center justify-between p-4 border-b border-zinc-900 bg-zinc-950 z-10 select-none">
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={() => setIsMobileSidebarOpen(true)}
               className="text-zinc-400 hover:text-zinc-200 p-1 cursor-pointer"
             >
@@ -432,10 +480,10 @@ export default function Dashboard() {
                                 <div className="flex flex-wrap gap-2 select-none">
                                   {msg.media.map((img, i) => (
                                     <a key={i} href={img.url} target="_blank" rel="noopener noreferrer">
-                                      <img 
-                                        src={img.url} 
-                                        alt={img.alt || "Uploaded image"} 
-                                        className="max-w-[240px] max-h-[160px] rounded-lg object-cover border border-zinc-800 hover:border-zinc-700 transition-colors shadow-sm" 
+                                      <img
+                                        src={img.url}
+                                        alt={img.alt || "Uploaded image"}
+                                        className="max-w-[240px] max-h-[160px] rounded-lg object-cover border border-zinc-800 hover:border-zinc-700 transition-colors shadow-sm"
                                       />
                                     </a>
                                   ))}
@@ -457,10 +505,10 @@ export default function Dashboard() {
                       </div>
                     );
                   })}
-                  
+
                   {/* Skeleton Typing screen */}
                   {renderLoadingSkeleton()}
-                  
+
                   <div ref={messagesEndRef} />
                 </div>
               </div>
@@ -500,15 +548,14 @@ export default function Dashboard() {
                             Press Enter to send, Shift+Enter for new line
                           </span>
                         </div>
-                        
+
                         <button
                           type="submit"
                           disabled={(!followUpQuery.trim() && selectedFiles.length === 0) || isLoading}
-                          className={`p-2 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
-                            (followUpQuery.trim() || selectedFiles.length > 0) && !isLoading
+                          className={`p-2 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${(followUpQuery.trim() || selectedFiles.length > 0) && !isLoading
                               ? "bg-zinc-100 text-zinc-950 hover:bg-zinc-200"
                               : "bg-transparent text-zinc-800 border border-zinc-900 cursor-not-allowed"
-                          }`}
+                            }`}
                         >
                           {isLoading ? (
                             <svg className="animate-spin h-4 w-4 text-zinc-500" fill="none" viewBox="0 0 24 24">
@@ -532,7 +579,7 @@ export default function Dashboard() {
           /* Landing Page / Search Box Wrapper */
           <div className="flex-1 overflow-y-auto w-full custom-scrollbar flex flex-col items-center">
             <div className="max-w-[680px] mx-auto w-full px-6 py-12 md:py-24 flex flex-col justify-center items-center min-h-full">
-              
+
               <h2 className="text-3xl font-display font-medium text-zinc-100 mb-8 tracking-tight text-center select-none">
                 Where knowledge comes at a Prompt
               </h2>
@@ -574,11 +621,10 @@ export default function Dashboard() {
                             key={opt}
                             type="button"
                             onClick={() => setSelectedFocus(opt)}
-                            className={`text-[10px] px-2.5 py-1.5 rounded-full font-semibold transition-all cursor-pointer ${
-                              selectedFocus === opt
+                            className={`text-[10px] px-2.5 py-1.5 rounded-full font-semibold transition-all cursor-pointer ${selectedFocus === opt
                                 ? "bg-zinc-900 text-zinc-100 border border-zinc-800"
                                 : "bg-transparent border border-transparent text-zinc-600 hover:text-zinc-400"
-                            }`}
+                              }`}
                           >
                             {opt}
                           </button>
@@ -590,11 +636,10 @@ export default function Dashboard() {
                     <button
                       type="submit"
                       disabled={(!searchQuery.trim() && selectedFiles.length === 0) || isLoading}
-                      className={`p-2 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
-                        (searchQuery.trim() || selectedFiles.length > 0) && !isLoading
+                      className={`p-2 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${(searchQuery.trim() || selectedFiles.length > 0) && !isLoading
                           ? "bg-zinc-100 text-zinc-950 hover:bg-zinc-200"
                           : "bg-transparent text-zinc-800 border border-zinc-900 cursor-not-allowed"
-                      }`}
+                        }`}
                     >
                       {isLoading ? (
                         <svg className="animate-spin h-4 w-4 text-zinc-500" fill="none" viewBox="0 0 24 24">

@@ -1,5 +1,5 @@
 import { initializeSocketConnection } from "../services/chat.socket";
-import { sendMessage, getChats, getChatMessages, deleteChat } from "../services/chat.api";
+import { sendMessage, getChats, getChatMessages, deleteChat, uploadFiles } from "../services/chat.api";
 import { useDispatch, useSelector } from "react-redux";
 import { 
     setIsLoading, 
@@ -18,49 +18,47 @@ export const useChat = () => {
     const { chats, currentChatId, isLoading, error } = useSelector((state) => state.chat);
 
     async function handleSendMessage({ question, chatId, files = [] }) {
-        let activeId = chatId;
-        try {
-            dispatch(setIsLoading(true));
-            const userMedia = files && files.length > 0
-                ? files.map(file => ({ url: URL.createObjectURL(file), alt: file.name }))
-                : [];
+        const socket = initializeSocketConnection();
+        if (!socket) return;
 
-            dispatch(addNewMessage({ 
-                chatId: chatId, 
-                content: question, 
-                role: "user",
-                media: userMedia
-            }));
-            
-            const data = await sendMessage(question, chatId, files);
-            const { chat, messages } = data;
-            
-            if (!chatId && chat) {
-                activeId = chat._id;
-                dispatch(addNewChat({ chatId: activeId, title: chat.title }));
-                dispatch(addNewMessage({ 
-                    chatId: activeId, 
-                    content: question, 
+        dispatch(setIsLoading(true));
+        
+        let uploadedMedia = [];
+        try {
+            if (files && files.length > 0) {
+                // 1. Upload files first over HTTP
+                const data = await uploadFiles(files);
+                uploadedMedia = data.files || [];
+            }
+
+            // 2. Format user message media local preview or URLs
+            const userMedia = uploadedMedia.length > 0 
+                ? uploadedMedia 
+                : (files && files.length > 0 
+                    ? files.map(file => ({ url: URL.createObjectURL(file), alt: file.name }))
+                    : []);
+
+            // 3. Dispatch user message locally if it's an existing chat
+            if (chatId) {
+                dispatch(addNewMessage({
+                    chatId,
+                    content: question,
                     role: "user",
                     media: userMedia
                 }));
-                dispatch(setCurrentChatId(activeId));
             }
 
-            if (messages && messages.length >= 2) {
-                const aiMsg = messages[1];
-                dispatch(addNewMessage({ chatId: activeId, content: aiMsg.content, role: aiMsg.role }));
-            }
-            return activeId;
+            // 4. Emit socket event
+            socket.emit('send-message', {
+                question,
+                chatId,
+                media: uploadedMedia
+            });
         } catch (error) {
             const errorMsg = error.response?.data?.error || error.message || "An unexpected error occurred.";
-            if (activeId) {
-                dispatch(removeLastMessage({ chatId: activeId }));
-            }
             dispatch(setError(errorMsg));
-            throw error;
-        } finally {
             dispatch(setIsLoading(false));
+            throw error;
         }
     }
 

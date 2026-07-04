@@ -13,6 +13,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.56.0",
     "@getbrevo/brevo": "^5.0.4",
     "@google/genai": "^2.10.0",
     "@imagekit/nodejs": "^7.9.1",

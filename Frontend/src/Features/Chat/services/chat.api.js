@@ -38,3 +38,16 @@ export const deleteChat = async (chatId) => {
     const response = await api.delete(`/delete-chat/${chatId}`);
     return response.data;
 }
+
+export const uploadFiles = async (files) => {
+    const formData = new FormData();
+    files.forEach(file => {
+        formData.append("image", file);
+    });
+    const response = await api.post("/upload", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data"
+        }
+    });
+    return response.data;
+}
