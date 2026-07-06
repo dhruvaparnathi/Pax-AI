@@ -8,6 +8,7 @@ import Sidebar from "../components/Sidebar";
 import ChatPanel from "../components/ChatPanel";
 import LandingPanel from "../components/LandingPanel";
 import Toast from "../components/Toast";
+import { useSpeechToText } from "../hooks/useSpeechToText";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -34,6 +35,22 @@ export default function Dashboard() {
   const fileInputRef = useRef(null);
   const [toastError, setToastError] = useState(null);
   const messagesEndRef = useRef(null);
+
+  const handleTranscript = (transcript, target) => {
+    if (target === "search") {
+      setSearchQuery(transcript);
+    } else if (target === "followUp") {
+      setFollowUpQuery(transcript);
+    }
+  };
+
+  const {
+    isListening,
+    isSpeechSupported,
+    listeningTarget,
+    startListening,
+    stopListening
+  } = useSpeechToText(handleTranscript);
 
   // File preview helper
   useEffect(() => {
@@ -291,6 +308,11 @@ export default function Dashboard() {
               onAttachmentClick={handleAttachmentClick}
               onRemoveFile={removeFile}
               messagesEndRef={messagesEndRef}
+              isListening={isListening}
+              isSpeechSupported={isSpeechSupported}
+              listeningTarget={listeningTarget}
+              onStartListening={startListening}
+              onStopListening={stopListening}
             />
           )
         ) : (
@@ -308,6 +330,11 @@ export default function Dashboard() {
             onAttachmentClick={handleAttachmentClick}
             onRemoveFile={removeFile}
             isLoading={isLoading}
+            isListening={isListening}
+            isSpeechSupported={isSpeechSupported}
+            listeningTarget={listeningTarget}
+            onStartListening={startListening}
+            onStopListening={stopListening}
           />
         )}
       </main>
