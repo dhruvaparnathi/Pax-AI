@@ -5,7 +5,7 @@ function verifySuccessPage(user) {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Email Verified - Perplexity</title>
+        <title>Email Verified - Pax AI</title>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -98,12 +98,12 @@ function verifySuccessPage(user) {
             <div class="icon">✅</div>
             <h1>Email Verified!</h1>
             <p class="subtitle">
-                Congratulations <span class="username">${user.username}</span>, your email has been successfully verified. You now have full access to Perplexity.
+                Congratulations <span class="username">${user.username}</span>, your email has been successfully verified. You now have full access to Pax AI.
             </p>
             <div class="badge">Verified & Active</div>
             <br>
             <a href="${process.env.CLIENT_URL || '/'}" class="btn">Get Started →</a>
-            <p class="footer">© ${new Date().getFullYear()} Perplexity. All rights reserved.</p>
+            <p class="footer">© ${new Date().getFullYear()} Pax AI. All rights reserved.</p>
         </div>
     </body>
     </html>
@@ -117,7 +117,7 @@ function alreadyVerifiedPage(user) {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Already Verified - Perplexity</title>
+        <title>Already Verified - Pax AI</title>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -195,7 +195,7 @@ function alreadyVerifiedPage(user) {
             <div class="badge">Verified & Active</div>
             <br>
             <a href="${process.env.CLIENT_URL || '/'}" class="btn">Go to Dashboard →</a>
-            <p class="footer">© ${new Date().getFullYear()} Perplexity. All rights reserved.</p>
+            <p class="footer">© ${new Date().getFullYear()} Pax AI. All rights reserved.</p>
         </div>
     </body>
     </html>
@@ -209,7 +209,7 @@ function verifyErrorPage(message) {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Verification Failed - Perplexity</title>
+        <title>Verification Failed - Pax AI</title>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -286,7 +286,7 @@ function verifyErrorPage(message) {
             <div class="error-msg">${message}</div>
             <br>
             <a href="${process.env.CLIENT_URL || '/'}" class="btn">Go Home →</a>
-            <p class="footer">© ${new Date().getFullYear()} Perplexity. All rights reserved.</p>
+            <p class="footer">© ${new Date().getFullYear()} Pax AI. All rights reserved.</p>
         </div>
     </body>
     </html>

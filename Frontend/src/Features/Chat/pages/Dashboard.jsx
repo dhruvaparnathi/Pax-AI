@@ -271,7 +271,7 @@ export default function Dashboard() {
                 <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="4" />
                 <path d="M12 20H28M20 12V28" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
               </svg>
-              <span className="font-display font-bold text-sm text-zinc-100 tracking-tight">perplexity</span>
+              <span className="font-display font-bold text-sm text-zinc-100 tracking-tight">pax ai</span>
             </div>
           </div>
           <button

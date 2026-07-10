@@ -8,7 +8,7 @@ export const uploadImage = async ({ buffer, fileName, fileType }) => {
     try {
         const response = await imagekit.files.upload({
             file: await toFile(Buffer.from(buffer), fileName),
-            folder: "perplexity/chats",
+            folder: "pax-ai/chats",
             fileName: fileName,
         });
         return response;

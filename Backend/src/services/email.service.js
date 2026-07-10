@@ -17,7 +17,7 @@ const sendEmail = async (to, subject, text, html) => {
       "https://api.brevo.com/v3/smtp/email",
       {
         sender: {
-          name: "Perplexity",
+          name: "Pax AI",
           email: process.env.BREVO_USER,
         },
         to: [{ email: to }],

@@ -47,6 +47,7 @@ const extractContentText = (content) => {
 export const generateResponse = async (messages, allImgs) => {
     const today = new Date();
     const systemPromptText = `
+        You are AI named 'Pax AI'
         You are a helpful assistant that answers user queries.
         You can response to text and process images as well.
         You can search the internet for information using the searchInternet tool.
@@ -130,6 +131,7 @@ export const generateResponse = async (messages, allImgs) => {
 export const generateResponseStream = async (messages, allImgs, onToken) => {
     const today = new Date();
     const systemPromptText = `
+        You are AI named 'Pax AI'.
         You are a helpful assistant that answers user queries.
         You can response to text and process images as well.
         You can search the internet for information using the searchInternet tool.

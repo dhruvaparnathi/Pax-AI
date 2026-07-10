@@ -78,7 +78,7 @@ export default function Login() {
             <path d="M12 20H28M20 12V28" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
           </svg>
           <span className="font-display font-bold text-lg text-zinc-100 tracking-tight">
-            perplexity
+            pax ai
           </span>
         </div>
 

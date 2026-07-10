@@ -30,7 +30,7 @@ export default function Sidebar({
               <path d="M12 20H28M20 12V28" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
             </svg>
             <span className="font-display font-bold text-base text-zinc-100 tracking-tight select-none">
-              perplexity
+              pax ai
             </span>
           </div>
 

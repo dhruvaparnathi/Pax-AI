@@ -5,7 +5,7 @@ function registerSuccessHtml(user, verifyUrl) {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Verify Your Email - Perplexity</title>
+        <title>Verify Your Email - Pax AI</title>
     </head>
     <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0a0a0a; padding: 40px 0;">
@@ -17,7 +17,7 @@ function registerSuccessHtml(user, verifyUrl) {
                         <tr>
                             <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 40px 30px; text-align: center;">
                                 <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
-                                    Welcome to Perplexity ✨
+                                    Welcome to Pax AI ✨
                                 </h1>
                                 <p style="margin: 10px 0 0; color: rgba(255,255,255,0.85); font-size: 15px;">
                                     Just one more step to get started
@@ -90,7 +90,7 @@ function registerSuccessHtml(user, verifyUrl) {
                         <tr>
                             <td style="padding: 24px 40px; background-color: rgba(0,0,0,0.2); text-align: center; border-top: 1px solid rgba(255,255,255,0.04);">
                                 <p style="margin: 0 0 8px; color: #6b6b6b; font-size: 13px;">
-                                    © ${new Date().getFullYear()} Perplexity. All rights reserved.
+                                    © ${new Date().getFullYear()} Pax AI. All rights reserved.
                                 </p>
                                 <p style="margin: 0; color: #4a4a4a; font-size: 12px;">
                                     If you didn't create this account, please ignore this email.
@@ -114,7 +114,7 @@ function emailVerifiedHtml(user) {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Email Verified - Perplexity</title>
+        <title>Email Verified - Pax AI</title>
     </head>
     <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0a0a0a; padding: 40px 0;">
@@ -141,7 +141,7 @@ function emailVerifiedHtml(user) {
                                     Awesome, <strong style="color: #4ade80;">${user.username}</strong>! Your email has been successfully verified. 🎉
                                 </p>
                                 <p style="margin: 0 0 28px; color: #b0b0b0; font-size: 15px; line-height: 1.6;">
-                                    You now have full access to all Perplexity features. Start exploring and make the most of your account!
+                                    You now have full access to all Pax AI features. Start exploring and make the most of your account!
                                 </p>
 
                                 <!-- Status Card -->
@@ -171,7 +171,7 @@ function emailVerifiedHtml(user) {
                         <tr>
                             <td style="padding: 24px 40px; background-color: rgba(0,0,0,0.2); text-align: center; border-top: 1px solid rgba(255,255,255,0.04);">
                                 <p style="margin: 0; color: #6b6b6b; font-size: 13px;">
-                                    © ${new Date().getFullYear()} Perplexity. All rights reserved.
+                                    © ${new Date().getFullYear()} Pax AI. All rights reserved.
                                 </p>
                             </td>
                         </tr>
@@ -192,7 +192,7 @@ function alreadyVerifiedHtml(user) {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Already Verified - Perplexity</title>
+        <title>Already Verified - Pax AI</title>
     </head>
     <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #0a0a0a; padding: 40px 0;">
@@ -239,7 +239,7 @@ function alreadyVerifiedHtml(user) {
                         <tr>
                             <td style="padding: 24px 40px; background-color: rgba(0,0,0,0.2); text-align: center; border-top: 1px solid rgba(255,255,255,0.04);">
                                 <p style="margin: 0; color: #6b6b6b; font-size: 13px;">
-                                    © ${new Date().getFullYear()} Perplexity. All rights reserved.
+                                    © ${new Date().getFullYear()} Pax AI. All rights reserved.
                                 </p>
                             </td>
                         </tr>

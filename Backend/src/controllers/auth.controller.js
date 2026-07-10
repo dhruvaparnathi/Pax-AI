@@ -39,7 +39,7 @@ const registerController = async (req, res, next) => {
 
         sendEmail(
             newUser.email,
-            "Verify Your Email - Perplexity",
+            "Verify Your Email - Pax AI",
             null,
             registerSuccessHtml(newUser, verifyUrl)
         ).catch((err) => console.error("Failed to send verification email:", err.message));
@@ -88,7 +88,7 @@ const verifyEmailController = async (req, res, next) => {
         if (user.verified) {
             sendEmail(
                 user.email,
-                "Already Verified - Perplexity",
+                "Already Verified - Pax AI",
                 null,
                 alreadyVerifiedHtml(user)
             ).catch((err) => console.error("Failed to send already verified email:", err.message));
