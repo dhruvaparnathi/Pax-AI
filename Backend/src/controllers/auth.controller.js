@@ -34,8 +34,8 @@ const registerController = async (req, res, next) => {
             expiresIn: "24h",
         });
 
-        // Build verify URL and send verification email (non-blocking)
-        const verifyUrl = `${process.env.CLIENT_URL || `http://localhost:${process.env.PORT || 3000}`}/api/auth/verify-email/${emailVerifyToken}`;
+        const baseUrl = process.env.CLIENT_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 3000}`;
+        const verifyUrl = `${baseUrl}/api/auth/verify-email/${emailVerifyToken}`;
 
         sendEmail(
             newUser.email,
