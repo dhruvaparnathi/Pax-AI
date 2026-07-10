@@ -4,7 +4,8 @@ let socket = null;
 
 export const initializeSocketConnection = () => {
     if (!socket) {
-        socket = io("http://localhost:3000", {
+        const socketUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
+        socket = io(socketUrl, {
             withCredentials: true,
             autoConnect: false
         });
