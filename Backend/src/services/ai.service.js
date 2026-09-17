@@ -5,12 +5,12 @@ import { searchInternet } from "./internet.service.js";
 import * as z from 'zod';
 
 const llm = new ChatMistralAI({
-    model: "mistral-large-latest",
+    model: "mistral-large-2512",
     apiKey: process.env.MISTRAL_API_KEY,
 });
 
 const microLLM = new ChatMistralAI({
-    model: "mistral-small-latest",
+    model: "mistral-small-2603",
     apiKey: process.env.MISTRAL_API_KEY,
 })
 
