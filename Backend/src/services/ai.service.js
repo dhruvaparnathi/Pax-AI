@@ -5,14 +5,14 @@ import { searchInternet } from "./internet.service.js";
 import * as z from 'zod';
 
 const llm = new ChatMistralAI({
-    model: "mistral-large-2402",
+    model: "ministral-8b-latest",
     apiKey: process.env.MISTRAL_API_KEY,
 });
 
 const microLLM = new ChatMistralAI({
-    model: "mistral-small-2402",
+    model: "ministral-3b-latest",
     apiKey: process.env.MISTRAL_API_KEY,
-})
+});
 
 const searchInternetTool = tool(
     searchInternet,
@@ -237,24 +237,16 @@ export const chatTitleGenerator = async (message) => {
     try {
         const response = await microLLM.invoke([
             new SystemMessage(
-                `You are a helpful assistant that generates concise and descriptive titles for given chat conversations.
-                - The title should be a short phrase or sentence (maximum 5 words) that captures the main topic of the conversation.
-                - The title should be in English, regardless of the language used in the conversation.
-                - The title should be engaging and relevant to the content of the conversation.
-                - The title should not contain any special characters, emojis, or punctuation marks unless they are essential for clarity.
-                - The title should be in sentence case format.
-                - You should generate only one title for each conversation.
-            `
+                `You are a helpful assistant that generates concise titles (max 5 words). Do not use quotes or markdown.`
             ),
-            new HumanMessage(`
-                Generate title for the following chat conversation:
-                ${message}
-                `)
+            new HumanMessage(`Generate title for: ${message}`)
         ]);
-        console.log("chat Title: ", response.text);
-        return response.text;
+        const title = (response.text || response.content || "")
+            .replace(/["*#]/g, '')
+            .trim();
+        return title || message.slice(0, 30);
     } catch (error) {
-        console.error("Error generating chat title:", error);
-        throw error;
+        console.warn("Title generator fallback used due to:", error.message);
+        return message.slice(0, 30) + (message.length > 30 ? "..." : "");
     }
 }
